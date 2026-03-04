@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Speedeck Mail Assistant</title>
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      background: #0F1419;
+      color: #E8E6E1;
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #1E2530;
+      position: sticky;
+      top: 0;
+      background: #0F1419;
+      z-index: 10;
+    }
+
+    .logo {
+      width: 32px; height: 32px;
+      border-radius: 7px;
+      background: linear-gradient(135deg, #D97706, #B45309);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 700; color: #fff;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .header-text h1 { font-size: 14px; font-weight: 700; letter-spacing: -0.02em; }
+    .header-text p { font-size: 10px; color: #6B7280; font-family: 'DM Mono', monospace; }
+
+    .container { padding: 16px; }
+
+    .label {
+      display: block;
+      font-size: 10px;
+      font-family: 'DM Mono', monospace;
+      color: #9CA3AF;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .email-preview {
+      background: #161B22;
+      border: 1px solid #1E2530;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 12px;
+      color: #9CA3AF;
+      max-height: 120px;
+      overflow-y: auto;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .email-preview.has-content { color: #D1D5DB; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+
+    .chip {
+      padding: 6px 11px;
+      border-radius: 7px;
+      border: 1px solid #1E2530;
+      background: #161B22;
+      color: #9CA3AF;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .chip:hover { border-color: #374151; }
+    .chip.active {
+      border-color: #D97706;
+      background: rgba(217, 119, 6, 0.1);
+      color: #F59E0B;
+    }
+
+    .btn-generate {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(135deg, #D97706, #B45309);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 4px;
+      margin-bottom: 8px;
+      transition: opacity 0.2s;
+    }
+
+    .btn-generate:disabled {
+      background: #1E2530;
+      color: #4B5563;
+      cursor: default;
+    }
+
+    .btn-generate:not(:disabled):hover { opacity: 0.9; }
+
+    .loading {
+      display: flex; gap: 6px; justify-content: center; padding: 24px 0;
+    }
+
+    .loading-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #D97706;
+      animation: bounce 1.2s ease-in-out infinite;
+    }
+
+    .loading-dot:nth-child(2) { animation-delay: 0.15s; }
+    .loading-dot:nth-child(3) { animation-delay: 0.3s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    .response-card {
+      background: #161B22;
+      border: 1px solid #1E2530;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .response-card.open { border-color: rgba(217, 119, 6, 0.5); }
+
+    .card-header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+      color: #E8E6E1;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .card-num {
+      width: 24px; height: 24px;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700;
+      font-family: 'DM Mono', monospace;
+      flex-shrink: 0;
+    }
+
+    .card-label { font-weight: 600; font-size: 13px; }
+    .card-notes { font-size: 11px; color: #6B7280; margin-top: 1px; }
+    .card-arrow { font-size: 16px; color: #6B7280; transition: transform 0.2s; margin-left: auto; }
+    .card-arrow.open { transform: rotate(180deg); }
+
+    .card-body {
+      padding: 0 14px 14px;
+    }
+
+    .response-text {
+      background: #0F1419;
+      border: 1px solid #1E2530;
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 12.5px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      color: #D1D5DB;
+    }
+
+    .btn-row { display: flex; gap: 8px; margin-top: 10px; }
+
+    .btn-copy, .btn-insert {
+      padding: 8px 16px;
+      border-radius: 7px;
+      border: none;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-copy {
+      background: #D97706;
+      color: #fff;
+    }
+
+    .btn-insert {
+      background: #0369A1;
+      color: #fff;
+    }
+
+    .btn-copy:hover { background: #B45309; }
+    .btn-insert:hover { background: #075985; }
+
+    .btn-copy.copied { background: #15803D; }
+
+    .error {
+      padding: 12px;
+      background: rgba(127, 29, 29, 0.15);
+      border: 1px solid #7F1D1D;
+      border-radius: 8px;
+      color: #FCA5A5;
+      font-size: 12px;
+      margin-top: 12px;
+    }
+
+    .api-key-section {
+      margin-bottom: 16px;
+    }
+
+    .api-input {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 7px;
+      border: 1px solid #1E2530;
+      background: #161B22;
+      color: #E8E6E1;
+      font-size: 12px;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .api-input:focus { outline: 1px solid #D97706; border-color: #D97706; }
+
+    .api-note {
+      font-size: 10px;
+      color: #6B7280;
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    .status-bar {
+      padding: 8px 16px;
+      background: #161B22;
+      border-bottom: 1px solid #1E2530;
+      font-size: 11px;
+      color: #6B7280;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+    }
+
+    .status-dot.ok { background: #15803D; }
+    .status-dot.err { background: #B91C1C; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo">S</div>
+    <div class="header-text">
+      <h1>Speedeck Mail Assistant</h1>
+      <p>AI-powered drafts</p>
+    </div>
+  </div>
+
+  <div id="status-bar" class="status-bar" style="display:none;">
+    <span id="status-dot" class="status-dot"></span>
+    <span id="status-text"></span>
+  </div>
+
+  <div class="container">
+
+    <!-- API Key -->
+    <div class="api-key-section">
+      <span class="label">Anthropic API Key</span>
+      <input type="password" id="apiKey" class="api-input" placeholder="sk-ant-..." />
+      <div class="api-note">Your key is stored locally in this session only. Get one at console.anthropic.com</div>
+    </div>
+
+    <!-- Email preview -->
+    <span class="label">Current Email</span>
+    <div id="emailPreview" class="email-preview">
+      Click "Draft Response" on an email to load it here...
+    </div>
+
+    <!-- Category -->
+    <span class="label">Category</span>
+    <div class="chips" id="categoryChips"></div>
+
+    <!-- Tone -->
+    <span class="label">Response Tone</span>
+    <div class="chips" id="toneChips"></div>
+
+    <!-- Generate -->
+    <button class="btn-generate" id="btnGenerate" disabled>Generate Response Options</button>
+
+    <!-- Loading -->
+    <div class="loading" id="loading" style="display:none;">
+      <div class="loading-dot"></div>
+      <div class="loading-dot"></div>
+      <div class="loading-dot"></div>
+    </div>
+
+    <!-- Error -->
+    <div class="error" id="error" style="display:none;"></div>
+
+    <!-- Results -->
+    <div id="results"></div>
+  </div>
+
+  <script>
+    // ==================== CONFIG ====================
+    const CATEGORIES = [
+      { id: "technical", label: "🔧 Technical" },
+      { id: "programme", label: "📅 Programme" },
+      { id: "scope", label: "📋 Scope" },
+      { id: "rfi", label: "📐 RFI" },
+      { id: "site", label: "🏗️ Site Issue" },
+      { id: "general", label: "💬 General" },
+    ];
+
+    const TONES = [
+      { id: "friendly", label: "Friendly" },
+      { id: "firm", label: "Firm & Direct" },
+      { id: "collaborative", label: "Collaborative" },
+    ];
+
+    const SYSTEM_PROMPT = `You are an AI email assistant for a Structural Engineer working as a subcontractor at Speedeck Foundations in the UK.
+
+ROLE CONTEXT:
+- Position: Team lead / coordination, structural engineer
+- Company: Speedeck Foundations (subcontractor for foundations and ground-related structures)
+- Team: 9 engineers
+- Responsibilities: structural design, verification, foundations, technical coordination with main contractor/client, reviewing drawings/specs, managing team workload, resolving site issues, programme alignment, risk identification
+
+WRITING STYLE (MANDATORY):
+- B2-level UK English (clear, not overly complex vocabulary)
+- Friendly but professional
+- Structured and practical
+- Decision-oriented - always move things forward
+- Concise but complete
+- No unnecessary corporate jargon
+- Use UK spelling (e.g. programme, behaviour, colour)
+- Be commercially aware when needed but don't be aggressive
+
+You must respond ONLY with a valid JSON object. No markdown, no backticks, no preamble. The JSON must have this structure:
+{
+  "responses": [
+    {
+      "label": "Short 2-4 word label describing approach",
+      "body": "The full email response text",
+      "notes": "Brief note on when to use this option"
+    }
+  ]
+}
+
+Generate exactly 3 response options with different strategic approaches. Each response should be ready to send (include greeting and sign-off with "Kind regards,\\n[Your Name]\\nSpeedeck Foundations").`;
+
+    const ACCENT = ["#D97706", "#0369A1", "#15803D"];
+
+    // ==================== STATE ====================
+    let selectedCategory = "technical";
+    let selectedTone = "friendly";
+    let emailBody = "";
+    let emailSubject = "";
+    let openCard = null;
+
+    // ==================== INIT ====================
+    Office.onReady(function(info) {
+      if (info.host === Office.HostType.Outlook) {
+        loadEmail();
+        showStatus("Connected to Outlook", true);
+      }
+    });
+
+    function loadEmail() {
+      try {
+        const item = Office.context.mailbox.item;
+        emailSubject = item.subject || "";
+
+        item.body.getAsync(Office.CoercionType.Text, function(result) {
+          if (result.status === Office.AsyncResultStatus.Succeeded) {
+            emailBody = result.value.trim();
+            const preview = document.getElementById("emailPreview");
+            if (emailBody) {
+              preview.textContent = emailBody.substring(0, 500) + (emailBody.length > 500 ? "..." : "");
+              preview.classList.add("has-content");
+              document.getElementById("btnGenerate").disabled = false;
+            } else {
+              preview.textContent = "No email body found.";
+            }
+          }
+        });
+
+        // Also get sender info
+        if (item.from) {
+          // from is available on read items
+        }
+      } catch (e) {
+        showStatus("Could not read email: " + e.message, false);
+      }
+    }
+
+    function showStatus(text, ok) {
+      const bar = document.getElementById("status-bar");
+      const dot = document.getElementById("status-dot");
+      const txt = document.getElementById("status-text");
+      bar.style.display = "flex";
+      dot.className = "status-dot " + (ok ? "ok" : "err");
+      txt.textContent = text;
+    }
+
+    // ==================== RENDER CHIPS ====================
+    function renderChips(containerId, items, selectedId, onSelect) {
+      const el = document.getElementById(containerId);
+      el.innerHTML = "";
+      items.forEach(function(item) {
+        const chip = document.createElement("button");
+        chip.className = "chip" + (item.id === selectedId ? " active" : "");
+        chip.textContent = item.label;
+        chip.onclick = function() {
+          onSelect(item.id);
+          renderChips(containerId, items, item.id, onSelect);
+        };
+        el.appendChild(chip);
+      });
+    }
+
+    renderChips("categoryChips", CATEGORIES, selectedCategory, function(id) { selectedCategory = id; });
+    renderChips("toneChips", TONES, selectedTone, function(id) { selectedTone = id; });
+
+    // ==================== GENERATE ====================
+    document.getElementById("btnGenerate").onclick = async function() {
+      const apiKey = document.getElementById("apiKey").value.trim();
+      if (!apiKey) {
+        showError("Please enter your Anthropic API key above.");
+        return;
+      }
+      if (!emailBody) {
+        showError("No email content loaded.");
+        return;
+      }
+
+      const btn = document.getElementById("btnGenerate");
+      const loading = document.getElementById("loading");
+      const results = document.getElementById("results");
+
+      btn.disabled = true;
+      btn.textContent = "Generating...";
+      loading.style.display = "flex";
+      results.innerHTML = "";
+      hideError();
+
+      const catLabel = CATEGORIES.find(function(c) { return c.id === selectedCategory; }).label;
+      const toneLabel = TONES.find(function(t) { return t.id === selectedTone; }).label;
+
+      try {
+        const res = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": apiKey,
+            "anthropic-version": "2023-06-01",
+            "anthropic-dangerous-direct-browser-access": "true"
+          },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 1500,
+            system: SYSTEM_PROMPT,
+            messages: [
+              {
+                role: "user",
+                content: "Subject: " + emailSubject + "\nCategory: " + catLabel + "\nPreferred tone: " + toneLabel + "\n\nIncoming email:\n---\n" + emailBody + "\n---\n\nGenerate 3 response options."
+              }
+            ]
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+          throw new Error(data.error.message || "API error");
+        }
+
+        const text = data.content.map(function(b) { return b.text || ""; }).join("");
+        const clean = text.replace(/```json|```/g, "").trim();
+        const parsed = JSON.parse(clean);
+
+        renderResults(parsed.responses);
+      } catch (e) {
+        showError("Error: " + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Generate Response Options";
+        loading.style.display = "none";
+      }
+    };
+
+    // ==================== RENDER RESULTS ====================
+    function renderResults(responses) {
+      const container = document.getElementById("results");
+      container.innerHTML = "";
+      openCard = null;
+
+      responses.forEach(function(r, i) {
+        const card = document.createElement("div");
+        card.className = "response-card";
+        card.id = "card-" + i;
+
+        // Header
+        const header = document.createElement("button");
+        header.className = "card-header";
+        header.innerHTML =
+          '<div class="card-num" style="background:' + ACCENT[i] + '22;color:' + ACCENT[i] + '">' + (i + 1) + '</div>' +
+          '<div style="flex:1;min-width:0"><div class="card-label">' + escHtml(r.label) + '</div>' +
+          '<div class="card-notes">' + escHtml(r.notes) + '</div></div>' +
+          '<span class="card-arrow" id="arrow-' + i + '">▾</span>';
+
+        header.onclick = function() { toggleCard(i, r); };
+        card.appendChild(header);
+
+        // Body (hidden)
+        const body = document.createElement("div");
+        body.className = "card-body";
+        body.id = "body-" + i;
+        body.style.display = "none";
+
+        const text = document.createElement("div");
+        text.className = "response-text";
+        text.textContent = r.body;
+        body.appendChild(text);
+
+        const btnRow = document.createElement("div");
+        btnRow.className = "btn-row";
+
+        const copyBtn = document.createElement("button");
+        copyBtn.className = "btn-copy";
+        copyBtn.id = "copy-" + i;
+        copyBtn.textContent = "Copy";
+        copyBtn.onclick = function(e) {
+          e.stopPropagation();
+          copyText(r.body, i);
+        };
+
+        const insertBtn = document.createElement("button");
+        insertBtn.className = "btn-insert";
+        insertBtn.textContent = "Insert as Reply";
+        insertBtn.onclick = function(e) {
+          e.stopPropagation();
+          insertReply(r.body);
+        };
+
+        btnRow.appendChild(copyBtn);
+        btnRow.appendChild(insertBtn);
+        body.appendChild(btnRow);
+        card.appendChild(body);
+        container.appendChild(card);
+      });
+    }
+
+    function toggleCard(i, r) {
+      const body = document.getElementById("body-" + i);
+      const arrow = document.getElementById("arrow-" + i);
+      const card = document.getElementById("card-" + i);
+
+      if (openCard === i) {
+        body.style.display = "none";
+        arrow.classList.remove("open");
+        card.classList.remove("open");
+        openCard = null;
+      } else {
+        // Close previous
+        if (openCard !== null) {
+          document.getElementById("body-" + openCard).style.display = "none";
+          document.getElementById("arrow-" + openCard).classList.remove("open");
+          document.getElementById("card-" + openCard).classList.remove("open");
+        }
+        body.style.display = "block";
+        arrow.classList.add("open");
+        card.classList.add("open");
+        openCard = i;
+      }
+    }
+
+    function copyText(text, i) {
+      navigator.clipboard.writeText(text).then(function() {
+        const btn = document.getElementById("copy-" + i);
+        btn.textContent = "✓ Copied!";
+        btn.classList.add("copied");
+        setTimeout(function() {
+          btn.textContent = "Copy";
+          btn.classList.remove("copied");
+        }, 2000);
+      });
+    }
+
+    function insertReply(text) {
+      try {
+        Office.context.mailbox.item.displayReplyForm(text);
+        showStatus("Reply form opened!", true);
+      } catch (e) {
+        showStatus("Could not open reply: " + e.message, false);
+      }
+    }
+
+    // ==================== HELPERS ====================
+    function showError(msg) {
+      const el = document.getElementById("error");
+      el.textContent = msg;
+      el.style.display = "block";
+    }
+
+    function hideError() {
+      document.getElementById("error").style.display = "none";
+    }
+
+    function escHtml(s) {
+      const d = document.createElement("div");
+      d.textContent = s;
+      return d.innerHTML;
+    }
+  </script>
+</body>
+</html>
