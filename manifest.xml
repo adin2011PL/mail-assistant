@@ -12,8 +12,8 @@
   <DefaultLocale>en-GB</DefaultLocale>
   <DisplayName DefaultValue="Speedeck Mail Assistant" />
   <Description DefaultValue="AI-powered email response drafts for Speedeck engineers." />
-  <IconUrl DefaultValue="https://YOUR-HOSTING-URL/assets/icon-64.png" />
-  <HighResolutionIconUrl DefaultValue="https://YOUR-HOSTING-URL/assets/icon-128.png" />
+  <IconUrl DefaultValue="https://adin2011pl.github.io/mail-assistant/icon-64.png" />
+  <HighResolutionIconUrl DefaultValue="https://adin2011pl.github.io/mail-assistant/icon-128.png" />
   <SupportUrl DefaultValue="https://speedeck.com" />
 
   <Hosts>
@@ -29,7 +29,7 @@
   <FormSettings>
     <Form xsi:type="ItemRead">
       <DesktopSettings>
-        <SourceLocation DefaultValue="https://YOUR-HOSTING-URL/taskpane.html" />
+        <SourceLocation DefaultValue="https://adin2011pl.github.io/mail-assistant/taskpane.html" />
         <RequestedHeight>450</RequestedHeight>
       </DesktopSettings>
     </Form>
@@ -76,12 +76,12 @@
     </Hosts>
     <Resources>
       <bt:Images>
-        <bt:Image id="icon16" DefaultValue="https://YOUR-HOSTING-URL/assets/icon-16.png" />
-        <bt:Image id="icon32" DefaultValue="https://YOUR-HOSTING-URL/assets/icon-32.png" />
-        <bt:Image id="icon80" DefaultValue="https://YOUR-HOSTING-URL/assets/icon-80.png" />
+        <bt:Image id="icon16" DefaultValue="https://adin2011pl.github.io/mail-assistant/icon-16.png" />
+        <bt:Image id="icon32" DefaultValue="https://adin2011pl.github.io/mail-assistant/icon-32.png" />
+        <bt:Image id="icon80" DefaultValue="https://adin2011pl.github.io/mail-assistant/icon-80.png" />
       </bt:Images>
       <bt:Urls>
-        <bt:Url id="taskPaneUrl" DefaultValue="https://YOUR-HOSTING-URL/taskpane.html" />
+        <bt:Url id="taskPaneUrl" DefaultValue="https://adin2011pl.github.io/mail-assistant/taskpane.html" />
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="groupLabel" DefaultValue="Speedeck" />
