@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speedeck Mail Assistant</title>
+<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:#F3F3F3;color:#323130;font-size:13px;line-height:1.5}
+.hdr{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#0078D4;color:#fff}
+.hdr-logo{width:30px;height:30px;border-radius:4px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700}
+.hdr h1{font-size:14px;font-weight:600}
+.hdr p{font-size:10px;opacity:.75}
+.status{padding:6px 16px;background:#fff;border-bottom:1px solid #EDEBE9;font-size:11px;color:#605E5C;display:flex;align-items:center;gap:6px}
+.dot{width:6px;height:6px;border-radius:50%}
+.dot-ok{background:#107C10}
+.dot-err{background:#D13438}
+.wrap{padding:14px 16px}
+.lbl{display:block;font-size:11px;font-weight:600;color:#605E5C;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+.api-in{width:100%;padding:7px 10px;border-radius:3px;border:1px solid #EDEBE9;background:#fff;color:#323130;font-size:12px;font-family:'Segoe UI',sans-serif}
+.api-in:focus{outline:none;border-color:#0078D4;box-shadow:0 0 0 1px #0078D4}
+.note{font-size:10px;color:#A19F9D;margin-top:4px;line-height:1.4}
+.divider{height:1px;background:#EDEBE9;margin:10px 0}
+.preview{background:#fff;border:1px solid #EDEBE9;border-radius:4px;padding:10px 12px;font-size:12px;color:#A19F9D;max-height:120px;overflow-y:auto;line-height:1.6;margin-bottom:14px}
+.preview.has{color:#323130}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}
+.chip{padding:5px 10px;border-radius:3px;border:1px solid #EDEBE9;background:#fff;color:#605E5C;font-size:12px;cursor:pointer;font-family:'Segoe UI',sans-serif}
+.chip:hover{border-color:#C8C6C4;background:#FAF9F8}
+.chip.on{border-color:#0078D4;background:#EFF6FC;color:#0078D4;font-weight:600}
+.btn-go{width:100%;padding:10px;border-radius:4px;border:none;background:#0078D4;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Segoe UI',sans-serif;margin-top:4px;margin-bottom:8px}
+.btn-go:hover{background:#106EBE}
+.btn-go:disabled{background:#C8C6C4;cursor:default}
+.dots{display:flex;gap:5px;justify-content:center;padding:20px 0}
+.dot-l{width:7px;height:7px;border-radius:50%;background:#0078D4;animation:b 1.2s ease-in-out infinite}
+.dot-l:nth-child(2){animation-delay:.15s}
+.dot-l:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,80%,100%{transform:scale(.6);opacity:.3}40%{transform:scale(1);opacity:1}}
+.card{background:#fff;border:1px solid #EDEBE9;border-radius:4px;margin-bottom:6px;overflow:hidden}
+.card.open{border-color:#0078D4}
+.card-h{width:100%;display:flex;align-items:center;gap:9px;padding:10px 12px;background:transparent;border:none;cursor:pointer;text-align:left;color:#323130;font-family:'Segoe UI',sans-serif}
+.card-h:hover{background:#FAF9F8}
+.card-n{width:22px;height:22px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.card-l{font-weight:600;font-size:12.5px}
+.card-d{font-size:11px;color:#A19F9D;margin-top:1px}
+.card-a{font-size:14px;color:#A19F9D;margin-left:auto;transition:transform .15s}
+.card-a.open{transform:rotate(180deg)}
+.card-b{padding:0 12px 12px}
+.resp{background:#FAF9F8;border:1px solid #EDEBE9;border-radius:3px;padding:10px 12px;font-size:12px;line-height:1.7;white-space:pre-wrap;color:#323130;font-family:Calibri,'Segoe UI',sans-serif}
+.btns{display:flex;gap:6px;margin-top:8px}
+.btn-c,.btn-i{padding:6px 14px;border-radius:3px;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:'Segoe UI',sans-serif}
+.btn-c{background:#0078D4;color:#fff}
+.btn-c:hover{background:#106EBE}
+.btn-i{background:#fff;color:#0078D4;border:1px solid #0078D4}
+.btn-i:hover{background:#EFF6FC}
+.btn-c.ok{background:#107C10}
+.err{padding:10px 12px;background:#FDE7E9;border:1px solid #D13438;border-radius:4px;color:#A4262C;font-size:12px;margin-top:10px}
+.info{margin-top:12px;padding:8px 12px;background:#EFF6FC;border-radius:4px;font-size:11px;color:#0050A0;line-height:1.5}
+.key-saved{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#E6F4EA;border:1px solid #A8DAB5;border-radius:4px;font-size:12px;color:#137333;margin-bottom:6px}
+.key-saved button{background:none;border:none;color:#0078D4;font-size:11px;cursor:pointer;text-decoration:underline;font-family:'Segoe UI',sans-serif;padding:0}
+.btn-save{padding:6px 12px;border-radius:3px;border:none;background:#107C10;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:'Segoe UI',sans-serif;margin-top:6px}
+.btn-save:hover{background:#0E6B0E}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+<div class="hdr-logo">S</div>
+<div>
+<h1>Speedeck Mail Assistant</h1>
+<p>AI-powered response drafts</p>
+</div>
+</div>
+
+<div id="st" class="status" style="display:none">
+<span id="sd" class="dot"></span>
+<span id="stx"></span>
+</div>
+
+<div class="wrap">
+
+<!-- API Key section -->
+<div id="keySection" style="margin-bottom:14px">
+<span class="lbl">Anthropic API Key</span>
+
+<!-- Saved state -->
+<div id="keySaved" class="key-saved" style="display:none">
+<span style="font-size:14px">&#9989;</span>
+<span>API key saved</span>
+<button id="keyChange">Change</button>
+<button id="keyClear" style="color:#A4262C">Remove</button>
+</div>
+
+<!-- Input state -->
+<div id="keyInput">
+<input type="password" id="key" class="api-in" placeholder="sk-ant-...">
+<div class="note">Your key will be saved permanently in this browser. Get one at console.anthropic.com</div>
+<button class="btn-save" id="keySaveBtn">Save Key</button>
+</div>
+</div>
+
+<div class="divider"></div>
+
+<span class="lbl">Current Email</span>
+<div id="ep" class="preview">Open an email and click "Draft Response" to load it here...</div>
+
+<span class="lbl">Category</span>
+<div class="chips" id="cats"></div>
+
+<span class="lbl">Response Tone</span>
+<div class="chips" id="tones"></div>
+
+<button class="btn-go" id="go" disabled>Generate Response Options</button>
+
+<div class="dots" id="ld" style="display:none">
+<div class="dot-l"></div>
+<div class="dot-l"></div>
+<div class="dot-l"></div>
+</div>
+
+<div class="err" id="er" style="display:none"></div>
+
+<div id="res"></div>
+
+</div>
+
+<script>
+var CATS=[
+{id:"technical",label:"Technical"},
+{id:"programme",label:"Programme"},
+{id:"scope",label:"Scope"},
+{id:"rfi",label:"RFI"},
+{id:"site",label:"Site Issue"},
+{id:"general",label:"General"}
+];
+
+var TONES=[
+{id:"friendly",label:"Friendly"},
+{id:"firm",label:"Firm & Direct"},
+{id:"collaborative",label:"Collaborative"}
+];
+
+var SYS="You are an AI email assistant for Adrian Natonek, Structural Engineer at Speedeck Foundations in the UK.\n\nROLE CONTEXT:\n- Name: Adrian Natonek MTech(Hons) CEng\n- Position: Structural Engineer, Team lead / coordination\n- Company: SPEEDECK Foundations Ltd. (subcontractor for foundations and ground-related structures)\n- Team: 9 engineers\n- Responsibilities: structural design, verification, foundations, technical coordination with main contractor/client, reviewing drawings/specs, managing team workload, resolving site issues, programme alignment, risk identification\n\nWRITING STYLE (MANDATORY):\n- B2-level UK English (clear, not overly complex vocabulary)\n- Friendly but professional\n- Structured and practical\n- Decision-oriented - always move things forward\n- Concise but complete\n- No unnecessary corporate jargon\n- Use UK spelling (e.g. programme, behaviour, colour)\n- Be commercially aware when needed but don't be aggressive\n\nEMAIL FORMAT (MANDATORY):\n- Start with a greeting like \"Hi [Name],\" or \"Dear [Name],\" based on the incoming email\n- Write the body text in clear paragraphs\n- DO NOT include any signature block. No \"Kind regards\", no name, no contact details. The signature is added automatically by Outlook. End right after the last paragraph of content.\n\nYou must respond ONLY with a valid JSON object. No markdown, no backticks, no preamble. The JSON must have this structure:\n{\"responses\": [{\"label\": \"Short 2-4 word label\", \"body\": \"Email body ONLY - no signature\", \"notes\": \"When to use this\"}]}\n\nGenerate exactly 3 response options with different strategic approaches.";
+
+var ABG=["#EFF6FC","#F0FFF0","#FFF8E5"];
+var AFG=["#0078D4","#107C10","#CA5010"];
+
+var cat="technical",tone="friendly",ebody="",subj="",openC=null;
+var apiKey="";
+
+// ==================== API KEY MANAGEMENT ====================
+function loadSavedKey(){
+try{
+var saved=localStorage.getItem("speedeck_api_key");
+if(saved){
+apiKey=saved;
+document.getElementById("keySaved").style.display="flex";
+document.getElementById("keyInput").style.display="none";
+return true;
+}
+}catch(e){}
+return false;
+}
+
+function saveKey(){
+var k=document.getElementById("key").value.trim();
+if(!k||!k.startsWith("sk-")){showErr("Please enter a valid API key (starts with sk-ant-...)");return}
+try{
+localStorage.setItem("speedeck_api_key",k);
+apiKey=k;
+document.getElementById("keySaved").style.display="flex";
+document.getElementById("keyInput").style.display="none";
+hideErr();
+}catch(e){showErr("Could not save key: "+e.message)}
+}
+
+function changeKey(){
+document.getElementById("keySaved").style.display="none";
+document.getElementById("keyInput").style.display="block";
+document.getElementById("key").value="";
+document.getElementById("key").focus();
+}
+
+function clearKey(){
+try{localStorage.removeItem("speedeck_api_key")}catch(e){}
+apiKey="";
+document.getElementById("keySaved").style.display="none";
+document.getElementById("keyInput").style.display="block";
+document.getElementById("key").value="";
+}
+
+document.getElementById("keySaveBtn").onclick=saveKey;
+document.getElementById("keyChange").onclick=changeKey;
+document.getElementById("keyClear").onclick=clearKey;
+
+// Also save on Enter
+document.getElementById("key").onkeydown=function(e){if(e.key==="Enter")saveKey()};
+
+// Load saved key on startup
+loadSavedKey();
+
+// ==================== OUTLOOK ====================
+Office.onReady(function(i){
+if(i.host===Office.HostType.Outlook){loadEmail();stat("Connected to Outlook",true)}
+});
+
+function loadEmail(){
+try{
+var it=Office.context.mailbox.item;
+subj=it.subject||"";
+it.body.getAsync(Office.CoercionType.Text,function(r){
+if(r.status===Office.AsyncResultStatus.Succeeded){
+ebody=r.value.trim();
+var p=document.getElementById("ep");
+if(ebody){p.textContent=ebody.substring(0,500)+(ebody.length>500?"...":"");p.classList.add("has");document.getElementById("go").disabled=false}
+else{p.textContent="No email body found."}
+}
+});
+}catch(e){stat("Could not read email: "+e.message,false)}
+}
+
+function stat(t,ok){
+document.getElementById("st").style.display="flex";
+document.getElementById("sd").className="dot "+(ok?"dot-ok":"dot-err");
+document.getElementById("stx").textContent=t;
+}
+
+function chips(cid,items,sel,fn){
+var el=document.getElementById(cid);el.innerHTML="";
+items.forEach(function(it){
+var b=document.createElement("button");
+b.className="chip"+(it.id===sel?" on":"");
+b.textContent=it.label;
+b.onclick=function(){fn(it.id);chips(cid,items,it.id,fn)};
+el.appendChild(b);
+});
+}
+
+chips("cats",CATS,cat,function(id){cat=id});
+chips("tones",TONES,tone,function(id){tone=id});
+
+// ==================== GENERATE ====================
+document.getElementById("go").onclick=async function(){
+// Get key from saved or input
+var k=apiKey||document.getElementById("key").value.trim();
+if(!k){showErr("Please enter and save your API key first.");return}
+if(!ebody){showErr("No email content loaded.");return}
+
+var btn=document.getElementById("go"),ld=document.getElementById("ld"),res=document.getElementById("res");
+btn.disabled=true;btn.textContent="Generating...";ld.style.display="flex";res.innerHTML="";hideErr();
+
+var cl=CATS.find(function(c){return c.id===cat}).label;
+var tl=TONES.find(function(t){return t.id===tone}).label;
+
+try{
+var r=await fetch("https://api.anthropic.com/v1/messages",{
+method:"POST",
+headers:{"Content-Type":"application/json","x-api-key":k,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+body:JSON.stringify({
+model:"claude-sonnet-4-20250514",
+max_tokens:1500,
+system:SYS,
+messages:[{role:"user",content:"Subject: "+subj+"\nCategory: "+cl+"\nPreferred tone: "+tl+"\n\nIncoming email:\n---\n"+ebody+"\n---\n\nGenerate 3 response options. Body text only, NO signature, NO Kind regards."}]
+})
+});
+
+var d=await r.json();
+if(d.error)throw new Error(d.error.message||"API error");
+var tx=d.content.map(function(b){return b.text||""}).join("");
+var cl2=tx.replace(/```json|```/g,"").trim();
+var p=JSON.parse(cl2);
+render(p.responses);
+}catch(e){showErr("Error: "+e.message)}
+finally{btn.disabled=false;btn.textContent="Generate Response Options";ld.style.display="none"}
+};
+
+// ==================== FORMATTING & COPY ====================
+function textToHtml(text){
+var paragraphs=text.split(/\n\n+/);
+var html='';
+for(var i=0;i<paragraphs.length;i++){
+var p=paragraphs[i].replace(/\n/g,'<br>');
+html+='<p style="margin:0 0 12px 0;font-family:Calibri,sans-serif;font-size:12pt;color:#000000;">'+p+'</p>';
+}
+return html;
+}
+
+function copyFormatted(text,idx){
+var html=textToHtml(text);
+var container=document.createElement("div");
+container.innerHTML=html;
+container.style.position="fixed";
+container.style.left="-9999px";
+container.style.top="-9999px";
+document.body.appendChild(container);
+
+var range=document.createRange();
+range.selectNodeContents(container);
+var sel=window.getSelection();
+sel.removeAllRanges();
+sel.addRange(range);
+
+try{
+document.execCommand("copy");
+var b=document.getElementById("cp"+idx);
+b.textContent="\u2713 Copied!";b.classList.add("ok");
+setTimeout(function(){b.textContent="Copy";b.classList.remove("ok")},2000);
+}catch(e){navigator.clipboard.writeText(text)}
+
+sel.removeAllRanges();
+document.body.removeChild(container);
+}
+
+// ==================== RENDER ====================
+function render(rs){
+var c=document.getElementById("res");c.innerHTML="";openC=null;
+
+rs.forEach(function(r,i){
+var card=document.createElement("div");card.className="card";card.id="c"+i;
+
+var h=document.createElement("button");h.className="card-h";
+h.innerHTML='<div class="card-n" style="background:'+ABG[i]+';color:'+AFG[i]+'">'+(i+1)+'</div><div style="flex:1;min-width:0"><div class="card-l">'+esc(r.label)+'</div><div class="card-d">'+esc(r.notes)+'</div></div><span class="card-a" id="a'+i+'">&#9662;</span>';
+h.onclick=function(){toggle(i)};
+card.appendChild(h);
+
+var bd=document.createElement("div");bd.className="card-b";bd.id="b"+i;bd.style.display="none";
+
+var tx=document.createElement("div");tx.className="resp";tx.textContent=r.body;
+bd.appendChild(tx);
+
+var btns=document.createElement("div");btns.className="btns";
+
+var cp=document.createElement("button");cp.className="btn-c";cp.id="cp"+i;cp.textContent="Copy";
+cp.onclick=function(e){e.stopPropagation();copyFormatted(r.body,i)};
+
+var ins=document.createElement("button");ins.className="btn-i";ins.textContent="Insert as Reply";
+ins.onclick=function(e){e.stopPropagation();reply(r.body)};
+
+btns.appendChild(cp);btns.appendChild(ins);bd.appendChild(btns);card.appendChild(bd);c.appendChild(card);
+});
+
+var info=document.createElement("div");info.className="info";
+info.textContent="\u2139\uFE0F Copied text is formatted as Calibri 12pt. Your Outlook signature will be added automatically.";
+c.appendChild(info);
+}
+
+function toggle(i){
+var bd=document.getElementById("b"+i),ar=document.getElementById("a"+i),cd=document.getElementById("c"+i);
+if(openC===i){bd.style.display="none";ar.classList.remove("open");cd.classList.remove("open");openC=null}
+else{
+if(openC!==null){document.getElementById("b"+openC).style.display="none";document.getElementById("a"+openC).classList.remove("open");document.getElementById("c"+openC).classList.remove("open")}
+bd.style.display="block";ar.classList.add("open");cd.classList.add("open");openC=i;
+}
+}
+
+function reply(t){
+var html=textToHtml(t);
+try{Office.context.mailbox.item.displayReplyForm(html);stat("Reply form opened!",true)}
+catch(e){stat("Could not open reply: "+e.message,false)}
+}
+
+function showErr(m){var e=document.getElementById("er");e.textContent=m;e.style.display="block"}
+function hideErr(){document.getElementById("er").style.display="none"}
+function esc(s){var d=document.createElement("div");d.textContent=s;return d.innerHTML}
+</script>
+</body>
+</html>
